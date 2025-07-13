@@ -1,4 +1,5 @@
 import asyncio
+import os
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 import logging
@@ -6,8 +7,8 @@ import logging
 # Настройка логгирования
 logging.basicConfig(level=logging.INFO)
 
-# Вставь свой токен сюда
-BOT_TOKEN = "8175161575:AAFqsXX6Fcx1zhWWB6DxCVOp-8s_EElED64"
+# Чтение токена из переменных окружения
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -25,3 +26,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
