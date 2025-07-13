@@ -1,4 +1,4 @@
-gunicorn main:flask_app
+gunicorn
 
 
 
