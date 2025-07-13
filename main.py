@@ -1,29 +1,47 @@
-import asyncio
-import os
-from aiogram import Bot, Dispatcher, types
-from aiogram.filters import Command
 import logging
+import os
 
-# Настройка логгирования
+from aiogram import Bot, Dispatcher, types
+from aiogram.enums import ParseMode
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import Update
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiohttp import web
+
+# Logging
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Чтение токена из переменных окружения
+# Tokens and Webhook
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+USE_WEBHOOK = os.getenv("USE_WEBHOOK", "True") == "True"
 
-bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher()
+if not BOT_TOKEN:
+    raise RuntimeError("BOT_TOKEN is not set")
 
-@dp.message(Command("start"))
-async def start_cmd(message: types.Message):
-    await message.answer("Привет! Я бот на aiogram 🚀")
+bot = Bot(token=BOT_TOKEN, parse_mode=ParseMode.HTML)
+dp = Dispatcher(storage=MemoryStorage())
 
-@dp.message(Command("help"))
-async def help_cmd(message: types.Message):
-    await message.answer("Доступные команды:\n/start\n/help")
+# Handler
+@dp.message()
+async def handle_message(message: types.Message):
+    await message.reply("Hello from Railway bot! 🚀")
 
+# Webhook or polling
 async def main():
-    await dp.start_polling(bot)
+    if USE_WEBHOOK:
+        app = web.Application()
+        SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
+        await bot.set_webhook(WEBHOOK_URL)
+        setup_application(app, dp, bot=bot)
+        return app
+    else:
+        await bot.delete_webhook(drop_pending_updates=True)
+        await dp.start_polling(bot)
 
-if __name__ == "__main__":
+if USE_WEBHOOK:
+    app = asyncio.run(main())
+else:
+    import asyncio
     asyncio.run(main())
-
